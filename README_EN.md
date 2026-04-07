@@ -55,7 +55,7 @@ https://github.com/user-attachments/assets/3228f78a-f035-447d-98ef-8826798a122c
 
 ### Option A — Direct download (recommended)
 
-Download the latest `VoiceInput.dmg` from [GitHub Releases](https://github.com/shibing624/VoiceInput/releases/latest), open it, and drag `VoiceInput.app` to your `Applications` folder.
+Download  [VoiceInput.dmg](https://github.com/shibing624/VoiceInput/releases/download/v1.0.0/VoiceInput.dmg) , open it, and drag `VoiceInput.app` to your `Applications` folder.
 
 ### Option B — Build DMG yourself
 
@@ -194,6 +194,13 @@ VoiceInput/
         └─► TextInjector: save clipboard → write text → Cmd+V → restore clipboard
                           (exits CJK input method first if needed)
 ```
+
+## Community & Support
+
+- **GitHub Issues** — [Submit issue](https://github.com/shibing624/VoiceInput/issues)
+- **WeChat Group** — Add WeChat ID `xuming624`, and leave a message "llm" to join the technical discussion group
+
+<img src="https://github.com/shibing624/TreeSearch/blob/main/docs/wechat.jpeg" width="200" />
 
 ## License
 
