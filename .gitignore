@@ -1,0 +1,27 @@
+# Swift / SwiftPM
+.build/
+.swiftpm/
+*.xcodeproj/
+xcuserdata/
+DerivedData/
+Package.resolved
+
+# Build outputs
+release/
+
+# Generated assets (regenerated via `make icon`)
+Assets/AppIcon.icns
+Assets/AppIcon.iconset/
+
+# macOS
+.DS_Store
+*.swp
+*~
+
+# IDE
+.vscode/
+.idea/
+
+# Code signing
+*.mobileprovision
+*.p12
