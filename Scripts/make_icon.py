@@ -31,10 +31,11 @@ def ensure_pillow():
         return Image, ImageDraw
     except ImportError:
         print("[icon] Pillow not found, installing...", flush=True)
-        subprocess.run(
-            [sys.executable, "-m", "pip", "install", "--quiet", "Pillow"],
-            check=True,
-        )
+        cmd = [sys.executable, "-m", "pip", "install", "--quiet", "Pillow"]
+        result = subprocess.run(cmd)
+        if result.returncode != 0:
+            cmd += ["--break-system-packages"]
+            subprocess.run(cmd, check=True)
         from PIL import Image, ImageDraw
         return Image, ImageDraw
 

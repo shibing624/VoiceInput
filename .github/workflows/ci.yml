@@ -15,6 +15,9 @@ jobs:
       - name: Select Xcode
         run: sudo xcode-select -s /Applications/Xcode.app
 
+      - name: Install Pillow
+        run: pip3 install Pillow --break-system-packages
+
       - name: Build
         run: swift build -c release
 

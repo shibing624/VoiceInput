@@ -18,7 +18,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip3 install Pillow
+          pip3 install Pillow --break-system-packages
           brew install create-dmg
 
       - name: Build DMG
