@@ -33,14 +33,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusBar.onSettingsRequested = { [weak self] in
             self?.showSettings()
         }
-        statusBar.onVoiceInputToggle = { [weak self] in
-            guard let self else { return }
-            if self.isRecording {
-                self.stopVoiceInput()
-            } else {
-                self.startVoiceInput()
-            }
-        }
         statusBar.onQuit = {
             NSApp.terminate(nil)
         }

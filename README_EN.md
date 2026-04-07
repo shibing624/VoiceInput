@@ -28,7 +28,6 @@ https://github.com/user-attachments/assets/3228f78a-f035-447d-98ef-8826798a122c
 | Feature | Description |
 |---------|-------------|
 | 🎙 **Push-to-talk** | Hold Fn / Right Command to record; release to inject |
-| 🖱 **Mouse trigger** | Click "Start Voice Input" in the menu bar — no keyboard required |
 | 🌊 **Live waveform HUD** | Capsule panel at the bottom of the screen with animated bars and real-time transcription preview |
 | 🔤 **CJK-aware injection** | Automatically exits CJK input methods (Pinyin, Zhuyin, etc.) before pasting, then restores |
 | 🌍 **Multi-language** | English, Simplified Chinese, Traditional Chinese, Japanese, Korean |
@@ -102,13 +101,6 @@ After granting Accessibility, the app auto-detects it within ~2 seconds — no m
 2. **Hold Fn** (or **Right ⌘**) — HUD appears at the bottom of the screen
 3. **Speak** — waveform animates, transcription previews in real time
 4. **Release** — text is injected at the cursor position
-
-### Click-to-talk (mouse)
-
-1. Click the **waveform icon** in the menu bar
-2. Click **"Start Voice Input"**
-3. Speak — same HUD appears
-4. Click the menu bar icon again → **"Stop Recording"** to finish
 
 The status bar icon changes to a filled waveform (●) while recording.
 

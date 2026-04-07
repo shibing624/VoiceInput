@@ -3,13 +3,11 @@ import AppKit
 final class StatusBarController {
     private var statusItem: NSStatusItem!
     private var languageMenu: NSMenu!
-    private var voiceInputMenuItem: NSMenuItem!
 
     // MARK: - Callbacks (set by AppDelegate)
     var onLanguageChanged: ((String) -> Void)?
     var onLLMToggled: ((Bool) -> Void)?
     var onSettingsRequested: (() -> Void)?
-    var onVoiceInputToggle: (() -> Void)?
     var onQuit: (() -> Void)?
 
     private let languages: [(title: String, code: String)] = [
@@ -30,18 +28,6 @@ final class StatusBarController {
         }
 
         let menu = NSMenu()
-
-        // ── Voice Input toggle (top item, most prominent) ──────────────────
-        voiceInputMenuItem = NSMenuItem(
-            title: "Start Voice Input",
-            action: #selector(toggleVoiceInput(_:)),
-            keyEquivalent: ""
-        )
-        voiceInputMenuItem.target = self
-        voiceInputMenuItem.image = icon("mic")
-        menu.addItem(voiceInputMenuItem)
-
-        menu.addItem(NSMenuItem.separator())
 
         // ── Language submenu ───────────────────────────────────────────────
         let languageItem = NSMenuItem(title: "Language", action: nil, keyEquivalent: "")
@@ -97,15 +83,11 @@ final class StatusBarController {
 
     func updateRecordingState(_ isRecording: Bool) {
         if isRecording {
-            voiceInputMenuItem.title = "Stop Recording"
-            voiceInputMenuItem.image = icon("stop.circle.fill")
             statusItem.button?.image = NSImage(
                 systemSymbolName: "waveform.circle.fill",
                 accessibilityDescription: "VoiceInput – Recording"
             )
         } else {
-            voiceInputMenuItem.title = "Start Voice Input"
-            voiceInputMenuItem.image = icon("mic")
             statusItem.button?.image = NSImage(
                 systemSymbolName: "waveform",
                 accessibilityDescription: "VoiceInput"
@@ -114,10 +96,6 @@ final class StatusBarController {
     }
 
     // MARK: - Actions
-
-    @objc private func toggleVoiceInput(_ sender: NSMenuItem) {
-        onVoiceInputToggle?()
-    }
 
     @objc private func languageSelected(_ sender: NSMenuItem) {
         guard let code = sender.representedObject as? String else { return }
