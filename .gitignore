@@ -9,9 +9,8 @@ Package.resolved
 # Build outputs
 release/
 
-# Generated assets (regenerated via `make icon`)
+# Generated binary (regenerated via `make icon`)
 Assets/AppIcon.icns
-Assets/AppIcon.iconset/
 
 # macOS
 .DS_Store
