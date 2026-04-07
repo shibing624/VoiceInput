@@ -67,6 +67,7 @@ final class FnKeyMonitor {
     private func handleEvent(proxy: CGEventTapProxy, type: CGEventType, event: CGEvent) -> Unmanaged<CGEvent>? {
         // Re-enable tap if it gets disabled by the system
         if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
+            NSLog("[VoiceInput] Event tap was disabled (type=%d), re-enabling", type.rawValue)
             if let tap = eventTap { CGEvent.tapEnable(tap: tap, enable: true) }
             return Unmanaged.passRetained(event)
         }

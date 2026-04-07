@@ -69,15 +69,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         fnKeyMonitor.onFnDown = { [weak self] in self?.startVoiceInput() }
         fnKeyMonitor.onFnUp   = { [weak self] in self?.stopVoiceInput()  }
 
-        if fnKeyMonitor.start() { return }
+        let trusted = FnKeyMonitor.isAccessibilityGranted()
+        NSLog("[VoiceInput] Accessibility granted: %@", trusted ? "YES" : "NO")
 
-        // Event tap failed — Accessibility not granted yet.
-        // Show the system prompt (fires once per install), then poll until granted.
+        if fnKeyMonitor.start() {
+            NSLog("[VoiceInput] Event tap created successfully")
+            return
+        }
+
+        NSLog("[VoiceInput] Event tap failed — waiting for Accessibility permission")
         _ = FnKeyMonitor.checkAccessibility()
 
         eventTapRetryTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] timer in
             guard let self else { timer.invalidate(); return }
-            if FnKeyMonitor.isAccessibilityGranted(), self.fnKeyMonitor.start() {
+            let granted = FnKeyMonitor.isAccessibilityGranted()
+            NSLog("[VoiceInput] Retry: Accessibility granted = %@", granted ? "YES" : "NO")
+            if granted, self.fnKeyMonitor.start() {
+                NSLog("[VoiceInput] Event tap created on retry")
                 timer.invalidate()
                 self.eventTapRetryTimer = nil
             }
