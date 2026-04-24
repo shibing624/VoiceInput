@@ -1,21 +1,26 @@
 import AppKit
 
-final class StatusBarController {
+final class StatusBarController: NSObject, NSMenuDelegate {
     private var statusItem: NSStatusItem!
+    private var diagnosticsAccessibilityItem: NSMenuItem!
+    private var diagnosticsLastTriggerItem: NSMenuItem!
+    private var languageItem: NSMenuItem!
     private var languageMenu: NSMenu!
 
     // MARK: - Callbacks (set by AppDelegate)
+    var onDiagnosticsRefreshRequested: (() -> Void)?
+    var onRecordingInputRequested: (() -> Void)?
     var onLanguageChanged: ((String) -> Void)?
     var onLLMToggled: ((Bool) -> Void)?
     var onSettingsRequested: (() -> Void)?
     var onQuit: (() -> Void)?
 
     private let languages: [(title: String, code: String)] = [
-        ("English",            "en-US"),
+        ("English", "en-US"),
         ("Simplified Chinese", "zh-CN"),
-        ("Traditional Chinese","zh-TW"),
-        ("Japanese",           "ja-JP"),
-        ("Korean",             "ko-KR"),
+        ("Traditional Chinese", "zh-TW"),
+        ("Japanese", "ja-JP"),
+        ("Korean", "ko-KR"),
     ]
 
     // MARK: - Setup
@@ -28,18 +33,38 @@ final class StatusBarController {
         }
 
         let menu = NSMenu()
+        menu.delegate = self
 
-        // ── Language submenu ───────────────────────────────────────────────
-        let languageItem = NSMenuItem(title: "Language", action: nil, keyEquivalent: "")
+        let recordingInputItem = NSMenuItem(
+            title: "Recording Input Box...",
+            action: #selector(openRecordingInput(_:)),
+            keyEquivalent: ""
+        )
+        recordingInputItem.target = self
+        menu.addItem(recordingInputItem)
+
+        menu.addItem(NSMenuItem.separator())
+
+        diagnosticsAccessibilityItem = NSMenuItem(title: "Accessibility: checking...", action: nil, keyEquivalent: "")
+        diagnosticsAccessibilityItem.isEnabled = false
+        menu.addItem(diagnosticsAccessibilityItem)
+
+        diagnosticsLastTriggerItem = NSMenuItem(title: "Last trigger: none", action: nil, keyEquivalent: "")
+        diagnosticsLastTriggerItem.isEnabled = false
+        menu.addItem(diagnosticsLastTriggerItem)
+
+        menu.addItem(NSMenuItem.separator())
+
+        languageItem = NSMenuItem(title: "Language", action: nil, keyEquivalent: "")
         languageMenu = NSMenu()
-        let selectedLang = UserDefaults.standard.string(forKey: DefaultsKey.selectedLanguage) ?? "zh-CN"
-        for lang in languages {
-            let item = NSMenuItem(title: lang.title,
+        let selectedLanguage = UserDefaults.standard.string(forKey: DefaultsKey.selectedLanguage) ?? "zh-CN"
+        for language in languages {
+            let item = NSMenuItem(title: language.title,
                                   action: #selector(languageSelected(_:)),
                                   keyEquivalent: "")
             item.target = self
-            item.representedObject = lang.code
-            if lang.code == selectedLang { item.state = .on }
+            item.representedObject = language.code
+            item.state = language.code == selectedLanguage ? .on : .off
             languageMenu.addItem(item)
         }
         languageItem.submenu = languageMenu
@@ -81,6 +106,10 @@ final class StatusBarController {
 
     // MARK: - Recording state (called by AppDelegate)
 
+    func menuWillOpen(_ menu: NSMenu) {
+        onDiagnosticsRefreshRequested?()
+    }
+
     func updateRecordingState(_ isRecording: Bool) {
         if isRecording {
             statusItem.button?.image = NSImage(
@@ -95,13 +124,30 @@ final class StatusBarController {
         }
     }
 
+    func updateAccessibilityStatus(_ isGranted: Bool) {
+        diagnosticsAccessibilityItem.title = "Accessibility: \(isGranted ? "granted" : "missing")"
+    }
+
+    func updateLastTrigger(_ trigger: FnKeyMonitor.TriggerSource?) {
+        diagnosticsLastTriggerItem.title = "Last trigger: \(trigger?.menuLabel ?? "none")"
+    }
+
+    func updateSelectedLanguage(_ code: String) {
+        for item in languageMenu.items {
+            let itemCode = item.representedObject as? String
+            item.state = itemCode == code ? .on : .off
+        }
+    }
+
     // MARK: - Actions
+
+    @objc private func openRecordingInput(_ sender: NSMenuItem) {
+        onRecordingInputRequested?()
+    }
 
     @objc private func languageSelected(_ sender: NSMenuItem) {
         guard let code = sender.representedObject as? String else { return }
-        for item in languageMenu.items { item.state = .off }
-        sender.state = .on
-        UserDefaults.standard.set(code, forKey: DefaultsKey.selectedLanguage)
+        updateSelectedLanguage(code)
         onLanguageChanged?(code)
     }
 
@@ -118,11 +164,5 @@ final class StatusBarController {
 
     @objc private func quitApp(_ sender: NSMenuItem) {
         onQuit?()
-    }
-
-    // MARK: - Helpers
-
-    private func icon(_ symbolName: String) -> NSImage? {
-        NSImage(systemSymbolName: symbolName, accessibilityDescription: nil)
     }
 }

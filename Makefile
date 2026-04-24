@@ -13,13 +13,14 @@ DMG_FILE    = $(RELEASE_DIR)/$(APP_NAME).dmg
 
 # Python 3 (used for icon generation). Override with: make icon PYTHON=/path/to/python3
 PYTHON      ?= python3
+LOCAL_CODESIGN_ID ?= VoiceInput Local Code Signing
 
-# Ad-hoc signing ("-") keeps Accessibility trust stable as long as the bundle
-# path doesn't change (i.e. always install to /Applications/VoiceInput.app).
-# Switch to "Developer ID Application: ..." for notarised distribution.
-CODESIGN_ID ?= -
+# Stable certificate signing is required for TCC / Accessibility trust.
+# You can override manually, e.g.:
+#   make install CODESIGN_ID="Apple Development: Your Name (TEAMID)"
+CODESIGN_ID ?= $(shell security find-identity -v -p codesigning 2>/dev/null | rg -F "\"$(LOCAL_CODESIGN_ID)\"" >/dev/null && printf '%s' "$(LOCAL_CODESIGN_ID)" || security find-identity -v -p codesigning 2>/dev/null | sed -n 's/.*"\(.*\)"/\1/p' | head -n 1)
 
-.PHONY: all build icon run install dmg clean
+.PHONY: all build icon run install dmg clean require-signing-identity signing-identities local-signing-cert
 
 all: build
 
@@ -28,8 +29,28 @@ icon:
 	@echo "▶ Generating app icon..."
 	$(PYTHON) Scripts/make_icon.py
 
+require-signing-identity:
+	@if [ -z "$(strip $(CODESIGN_ID))" ]; then \
+		echo "✗ No valid code signing identity found."; \
+		echo "  VoiceInput now requires stable certificate signing for Accessibility trust."; \
+		echo "  Install an Apple Development / Developer ID Application certificate,"; \
+		echo "  or pass one explicitly:"; \
+		echo "    make install CODESIGN_ID=\"Apple Development: Your Name (TEAMID)\""; \
+		echo ""; \
+		echo "  Available identities:"; \
+		security find-identity -v -p codesigning || true; \
+		exit 1; \
+	fi
+	@echo "▶ Using signing identity: $(CODESIGN_ID)"
+
+signing-identities:
+	@security find-identity -v -p codesigning
+
+local-signing-cert:
+	@bash Scripts/create_local_codesign_cert.sh
+
 # ── Build .app bundle ──────────────────────────────────────────────────────────
-build: icon
+build: icon require-signing-identity
 	@echo "▶ Compiling (release)..."
 	swift build -c release
 	@echo "▶ Assembling $(APP_BUNDLE)..."

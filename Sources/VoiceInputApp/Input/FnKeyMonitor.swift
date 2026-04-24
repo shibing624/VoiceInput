@@ -10,15 +10,29 @@ import Carbon
 ///   • External keyboards with Fn  → Fn key  (maskSecondaryFn, if firmware forwards it)
 ///   • Any keyboard                → Right Command (keyCode 54) — universal fallback
 final class FnKeyMonitor {
+    enum TriggerSource {
+        case fn
+        case rightCommand
+
+        var menuLabel: String {
+            switch self {
+            case .fn:
+                return "Fn"
+            case .rightCommand:
+                return "Right Command"
+            }
+        }
+    }
+
     private var eventTap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
 
     var onFnDown: (() -> Void)?
     var onFnUp: (() -> Void)?
+    var onTriggerDetected: ((TriggerSource) -> Void)?
 
     /// Tracks which key initiated the current recording session.
     /// nil = not recording via keyboard.
-    private enum TriggerSource { case fn, rightCommand }
     private var triggerSource: TriggerSource?
 
     private var isTriggered: Bool { triggerSource != nil }
@@ -95,7 +109,10 @@ final class FnKeyMonitor {
 
         if fnNowPressed, triggerSource == nil {
             triggerSource = .fn
-            DispatchQueue.main.async { [weak self] in self?.onFnDown?() }
+            DispatchQueue.main.async { [weak self] in
+                self?.onTriggerDetected?(.fn)
+                self?.onFnDown?()
+            }
             return nil  // suppress emoji picker
         }
 
@@ -113,7 +130,10 @@ final class FnKeyMonitor {
 
             if cmdNowPressed, triggerSource == nil {
                 triggerSource = .rightCommand
-                DispatchQueue.main.async { [weak self] in self?.onFnDown?() }
+                DispatchQueue.main.async { [weak self] in
+                    self?.onTriggerDetected?(.rightCommand)
+                    self?.onFnDown?()
+                }
                 return nil  // suppress Right Command action
             }
 

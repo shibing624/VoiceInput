@@ -24,3 +24,5 @@ Assets/AppIcon.icns
 # Code signing
 *.mobileprovision
 *.p12
+Scripts/__pycache__/
+Scripts/dist/

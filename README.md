@@ -30,9 +30,9 @@ https://github.com/user-attachments/assets/3228f78a-f035-447d-98ef-8826798a122c
 | 🎙 **按键触发** | 按住 Fn / 右 Command 录音，松开即注入文字 |
 | 🌊 **悬浮波形 HUD** | 屏幕底部胶囊面板，动态波形 + 实时转录预览 |
 | 🔤 **中文输入法兼容** | 注入前自动退出拼音/注音等输入法，注入后恢复 |
-| 🌍 **多语言支持** | 英语、简体中文、繁体中文、日语、韩语 |
+| 🌍 **Apple Speech 多语言** | 基于 Apple Speech，可切换英语、简中、繁中、日语、韩语 |
+| 📝 **录音输入框** | 菜单栏可打开独立文本框，收集 ASR 文本并支持复制 |
 | 🤖 **LLM 纠错（可选）** | 接入任意 OpenAI 兼容接口，修复同音字和专业词汇误识 |
-| 🔒 **设备端语音识别** | 基于 Apple Speech 框架，音频不离开本机 |
 
 ## 触发按键支持
 
@@ -88,7 +88,7 @@ make run            # 编译并从 release/ 启动
 | 权限 | 用途 | 授权位置 |
 |------|------|----------|
 | **麦克风** | 录制音频 | 系统设置 › 隐私与安全 › 麦克风 |
-| **语音识别** | Apple 设备端语音转文字 | 系统设置 › 隐私与安全 › 语音识别 |
+| **语音识别** | Apple Speech 多语言识别 | 系统设置 › 隐私与安全 › 语音识别 |
 | **辅助功能** | 全局监听 Fn / 右 ⌘ 按键 | 系统设置 › 隐私与安全 › 辅助功能 |
 
 授予辅助功能权限后，应用约 2 秒内自动检测，无需手动重启。
@@ -104,10 +104,23 @@ make run            # 编译并从 release/ 启动
 
 录音期间状态栏图标变为实心波形（●），直观显示录音状态。
 
-### 语言设置
+### 语言切换
 
-菜单栏图标 → **Language** → 选择语言  
-设置立即生效并自动保存。
+菜单栏图标里可以直接切换 Apple Speech 识别语言：
+
+1. 打开菜单栏图标
+2. 进入 **Language**
+3. 选择英语、简中、繁中、日语或韩语
+
+### 录音输入框
+
+当你当前没有可输入的文本框，或者只想先收集一段转写文本时：
+
+1. 打开菜单栏图标
+2. 点击 **Recording Input Box...**
+3. 在弹出的面板里点击 **Start Recording**
+4. 说话后点击 **Stop Recording**
+5. 用 **Copy** 复制文本，或继续在面板里编辑/累积内容
 
 ### LLM 纠错（可选）
 
@@ -142,8 +155,9 @@ VoiceInput/
 │   │   ├── AudioRecorder.swift     # AVAudioEngine 录音 + RMS 电平计算
 │   │   └── SpeechRecognizer.swift  # Apple Speech 流式识别
 │   ├── UI/
-│   │   ├── StatusBarController.swift  # 菜单栏图标、菜单、录音状态
+│   │   ├── StatusBarController.swift  # 菜单栏图标、录音状态、功能入口
 │   │   ├── FloatingPanel.swift        # HUD 胶囊窗口
+│   │   ├── RecordingInputPanel.swift  # 菜单栏录音输入框面板
 │   │   ├── WaveformView.swift         # 5 柱波形动画（CVDisplayLink）
 │   │   └── SettingsWindow.swift       # LLM API 配置界面
 │   ├── Input/
@@ -156,7 +170,9 @@ VoiceInput/
 ├── Assets/
 │   └── AppIcon.icns                # 由 Scripts/make_icon.py 生成
 ├── Scripts/
-│   └── make_icon.py                # 用 Pillow 生成 AppIcon.icns
+│   ├── make_icon.py                # 用 Pillow 生成 AppIcon.icns
+│   ├── apple_speech_demo.py        # Apple Speech 独立 Python Demo
+│   └── build_apple_speech_demo_app.sh # 将 Apple Speech Demo 打包为 .app
 ├── Info.plist
 ├── Entitlements.plist
 ├── Makefile
@@ -171,20 +187,25 @@ VoiceInput/
         ▼
   CGEvent tap（FnKeyMonitor）
         │
-        ├─► AVAudioEngine 启动 → PCM 音频流送入 SpeechRecognizer
+        ├─► AVAudioEngine 启动 → 麦克风音频进入 Apple Speech
         │
-        ├─► SFSpeechAudioBufferRecognitionRequest → 实时部分结果
-        │         显示在 FloatingPanel HUD
+        ├─► Apple Speech 实时输出 partial / final 文本
+        │
+        ├─► 按键触发：显示在 FloatingPanel HUD
+        │
+        └─► 菜单触发：显示在 Recording Input Box 面板
         │
 [松开按键 / 点击"停止录音"]
         │
         ▼
   最终转录文本
         │
-        ├─ (LLM 已开启?) ──► OpenAI 兼容接口 ──► 纠错后文本
+        ├─ (按键触发且 LLM 已开启?) ──► OpenAI 兼容接口 ──► 纠错后文本
         │
-        └─► TextInjector：保存剪贴板 → 写入文本 → Cmd+V 粘贴 → 恢复剪贴板
-                          （注入前先退出中文输入法）
+        ├─► 按键触发：TextInjector 写入当前光标位置
+        │                （注入前先退出中文输入法）
+        │
+        └─► 菜单触发：保留在 Recording Input Box 中，供复制或手动编辑
 ```
 
 ## 常见问题
@@ -198,8 +219,11 @@ A: 大多数第三方键盘的 Fn 键由固件处理，不向系统发送按键�
 **Q: 重新编译后辅助功能权限失效了？**  
 A: 直接运行 `.build/` 下的二进制文件会导致这个问题。请使用 `make install` 安装到 `/Applications`，路径固定后只需授权一次。
 
-**Q: 中文识别准确率不够高？**  
-A: 开启 LLM 纠错功能（接入 GPT-4、Qwen 等模型），可显著修复同音字错误和专有名词误识。
+**Q: 我想用英文或日语识别怎么办？**  
+A: 在菜单栏 **Language** 子菜单里直接选择目标语言即可。
+
+**Q: 没有输入框焦点时，怎么先把语音转成文本？**  
+A: 打开菜单栏里的 **Recording Input Box...**。录音结果会保留在独立面板里，你可以复制后再粘贴到任何地方。
 
 ## 社区与支持
 

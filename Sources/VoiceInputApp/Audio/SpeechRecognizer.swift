@@ -1,5 +1,5 @@
-import Speech
 import AVFoundation
+import Speech
 
 final class SpeechRecognizer {
     private var recognizer: SFSpeechRecognizer?
